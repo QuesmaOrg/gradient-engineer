@@ -1,0 +1,67 @@
+name: Build toolbox
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build toolbox ${{ matrix.os }} (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            os: linux
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            os: linux
+            arch: arm64
+          # - runner: macos-13
+          #   os: darwin
+          #   arch: amd64
+          # - runner: macos-15
+          #   os: darwin
+          #   arch: arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          check-latest: true
+          cache: true
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Build toolbox builder
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd toolbox
+          go build -o toolbox-builder
+
+      - name: Build toolbox archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd toolbox
+          ./toolbox-builder --playbook ../playbook/60-second-linux.yaml --out .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolbox.${{ matrix.os }}.${{ matrix.arch }}
+          path: toolbox/*.tar.xz
+          if-no-files-found: error
+          retention-days: 7
+
+
