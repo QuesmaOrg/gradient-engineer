@@ -1,0 +1,41 @@
+nixpkgs:
+  version: "22.05"
+  packages:
+    - coreutils
+    - util-linux
+    - procps
+    - sysstat
+system_prompt: |
+  ### 60-second Linux analysis
+
+  Please analyze the following Linux system diagnostic output. Focus on identifying any performance issues, errors, or notable system characteristics.
+
+  - Be concise but comprehensive
+  - Start with a 1-sentence overview and the key finding
+  - Prefer bullet points where helpful
+  - Keep the total length to 2-3 short paragraphs (including bullets)
+
+  When recommending actions, prioritize practical steps.
+commands:
+  - command: 186m66li0jgnsx31rv524y2s871yrfcp-procps-4.0.4/bin/uptime
+    description: System uptime and load averages
+  - command: 186m66li0jgnsx31rv524y2s871yrfcp-procps-4.0.4/bin/vmstat 1
+    description: Virtual memory statistics, 1s updates
+  - command: gj1lv5c9vh8vy76ad9h7qg9b34lx3fb5-sysstat-12.7.4/bin/mpstat -P ALL 1
+    description: CPU utilization per core, 1s
+  - command: gj1lv5c9vh8vy76ad9h7qg9b34lx3fb5-sysstat-12.7.4/bin/pidstat 1
+    description: Per-process CPU usage, 1s
+  - command: gj1lv5c9vh8vy76ad9h7qg9b34lx3fb5-sysstat-12.7.4/bin/iostat -xz 1
+    description: Extended I/O statistics, 1s
+  - command: 186m66li0jgnsx31rv524y2s871yrfcp-procps-4.0.4/bin/free -m
+    description: Memory usage in MiB
+  - command: gj1lv5c9vh8vy76ad9h7qg9b34lx3fb5-sysstat-12.7.4/bin/sar -n DEV 1
+    description: Network device statistics, 1s
+  - command: gj1lv5c9vh8vy76ad9h7qg9b34lx3fb5-sysstat-12.7.4/bin/sar -n TCP,ETCP 1
+    description: TCP counters and errors, 1s
+  - command: 186m66li0jgnsx31rv524y2s871yrfcp-procps-4.0.4/bin/top -b -n 1
+    description: Top processes snapshot
+  - command: 5h222rfc23nmb8fzfwnwmnd3w2a2iz8f-util-linux-2.41-bin/bin/dmesg
+    description: Kernel ring buffer
+    sudo: true
+

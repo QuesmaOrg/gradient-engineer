@@ -1,0 +1,59 @@
+name: Build toolbox
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch_tag: x86_64-linux
+          - runner: ubuntu-24.04-arm
+            arch_tag: aarch64-linux
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: toolbox/go.mod
+          check-latest: true
+          cache: true
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+
+      - name: Build toolbox builder
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd toolbox
+          go build -o toolbox-builder
+
+      - name: Build toolbox archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd toolbox
+          ./toolbox-builder -yaml ../app/playbooks/60-second-linux.yaml -out toolbox-${{ matrix.arch_tag }}.tar.xz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolbox-${{ matrix.arch_tag }}
+          path: toolbox/toolbox-${{ matrix.arch_tag }}.tar.xz
+          if-no-files-found: error
+          retention-days: 7
+
+
