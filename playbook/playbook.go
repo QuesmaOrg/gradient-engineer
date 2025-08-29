@@ -1,6 +1,7 @@
 package playbook
 
 type PlaybookConfig struct {
+	ID      string `yaml:"id"`
 	Nixpkgs struct {
 		Version  string   `yaml:"version"`
 		Packages []string `yaml:"packages"`
@@ -15,5 +16,3 @@ type PlaybookCommand struct {
 	Sudo           bool   `yaml:"sudo,omitempty"`
 	TimeoutSeconds int    `yaml:"timeout_seconds,omitempty"`
 }
-
-

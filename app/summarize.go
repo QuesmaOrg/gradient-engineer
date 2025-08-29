@@ -6,12 +6,12 @@ import (
 	"os"
 	"strings"
 
-	"gradient-engineer/playbook"
-	tea "github.com/charmbracelet/bubbletea"
 	anthropic "github.com/anthropics/anthropic-sdk-go"
 	anthopt "github.com/anthropics/anthropic-sdk-go/option"
+	tea "github.com/charmbracelet/bubbletea"
 	openai "github.com/openai/openai-go"
 	openaiopt "github.com/openai/openai-go/option"
+	"gradient-engineer/playbook"
 )
 
 // SummaryCommand represents a command's description and its captured output
@@ -185,5 +185,3 @@ func summarizeCmd(s *Summarizer, systemPrompt string, commands []SummaryCommand)
 		return llmMsg{summary: summary}
 	}
 }
-
-

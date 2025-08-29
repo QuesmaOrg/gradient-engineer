@@ -13,14 +13,8 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
+	"gradient-engineer/playbook"
 )
-
-type playbookConfig struct {
-	Nixpkgs struct {
-		Version  string   `yaml:"version"`
-		Packages []string `yaml:"packages"`
-	} `yaml:"nixpkgs"`
-}
 
 func main() {
 	var yamlPath string
@@ -78,12 +72,12 @@ func main() {
 	fmt.Printf("created %s\n", outPath)
 }
 
-func readYAML(path string) (*playbookConfig, error) {
+func readYAML(path string) (*playbook.PlaybookConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	var cfg playbookConfig
+	var cfg playbook.PlaybookConfig
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
@@ -148,8 +142,6 @@ func fetchAndInstallProot(destDir string) error {
 	}
 	return nil
 }
-
-
 
 func extractProotFromAPK(apk []byte, destPath string) error {
 	workDir, err := os.MkdirTemp("", "proot_apk_*")
@@ -251,6 +243,3 @@ func fatalf(format string, a ...any) {
 	fmt.Fprintf(os.Stderr, format+"\n", a...)
 	os.Exit(1)
 }
-
-
-

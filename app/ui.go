@@ -104,7 +104,7 @@ func NewModel(tb *Toolbox) *model {
 			s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 			return s
 		}(),
-		startTime: time.Now(),
+		startTime:  time.Now(),
 		summarizer: NewSummarizer(),
 	}
 }

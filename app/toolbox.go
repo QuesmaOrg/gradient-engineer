@@ -13,24 +13,24 @@ import (
 	"strings"
 	"time"
 
-	"gradient-engineer/playbook"
 	"github.com/ulikunitz/xz"
 	"gopkg.in/yaml.v3"
+	"gradient-engineer/playbook"
 )
 
 // DiagnosticCommand represents a diagnostic command with its actual command and display name
 type DiagnosticCommand struct {
-	Command string            // The actual command to execute
-	Display string            // Human-readable display name
-	Spec    *playbook.PlaybookCommand  // Pointer to the originating playbook command spec
-	Timeout time.Duration     // Timeout for the command execution
+	Command string                    // The actual command to execute
+	Display string                    // Human-readable display name
+	Spec    *playbook.PlaybookCommand // Pointer to the originating playbook command spec
+	Timeout time.Duration             // Timeout for the command execution
 }
 
 // Toolbox represents a downloaded and extracted toolbox
 type Toolbox struct {
-	URL      string            // URL to download from
-	TempDir  string            // Temporary directory where toolbox is extracted
-	Playbook *playbook.PlaybookConfig   // Loaded playbook configuration
+	URL      string                   // URL to download from
+	TempDir  string                   // Temporary directory where toolbox is extracted
+	Playbook *playbook.PlaybookConfig // Loaded playbook configuration
 }
 
 // NewToolbox creates a new Toolbox instance
