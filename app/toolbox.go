@@ -157,12 +157,18 @@ func (t *Toolbox) GetDiagnosticCommands() ([]DiagnosticCommand, error) {
 		return []DiagnosticCommand{}, nil
 	}
 
-	cfg, err := loadDiagnosticsConfigEmbedded()
+	// Load playbook from the extracted toolbox archive only
+	playbookPath := filepath.Join(t.TempDir, "toolbox", "playbook.yaml")
+	data, err := os.ReadFile(playbookPath)
 	if err != nil {
-		return []DiagnosticCommand{}, err
+		return []DiagnosticCommand{}, fmt.Errorf("failed to read playbook.yaml from toolbox: %w", err)
+	}
+	var cfg PlaybookConfig
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return []DiagnosticCommand{}, fmt.Errorf("failed to parse playbook.yaml: %w", err)
 	}
 	// Store playbook on toolbox for later use (e.g., system prompt)
-	t.Playbook = cfg
+	t.Playbook = &cfg
 
 	toolboxPath := path.Join(t.TempDir, "toolbox")
 	storeDir := filepath.Join(toolboxPath, "nix", "store")
@@ -226,42 +232,6 @@ func (t *Toolbox) GetDiagnosticCommands() ([]DiagnosticCommand, error) {
 		})
 	}
 	return result, nil
-}
-
-// loadDiagnosticsConfig reads diagnostics.yaml from the working directory or alongside the executable.
-func loadDiagnosticsConfig() (*PlaybookConfig, error) {
-	pathsToTry := []string{"diagnostics.yaml"}
-	if exe, err := os.Executable(); err == nil {
-		pathsToTry = append(pathsToTry, filepath.Join(filepath.Dir(exe), "diagnostics.yaml"))
-	}
-
-	var data []byte
-	var readErr error
-	for _, p := range pathsToTry {
-		data, readErr = os.ReadFile(p)
-		if readErr == nil {
-			break
-		}
-	}
-	if readErr != nil {
-		return nil, readErr
-	}
-
-	var cfg PlaybookConfig
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
-}
-
-// loadDiagnosticsConfigEmbedded unmarshals the embedded 60-second playbook
-func loadDiagnosticsConfigEmbedded() (*PlaybookConfig, error) {
-	data := embeddedPlaybook()
-	var cfg PlaybookConfig
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
 }
 
 // ExecuteDiagnosticCommand executes a single diagnostic command and returns its output
