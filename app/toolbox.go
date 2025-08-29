@@ -51,18 +51,29 @@ func (t *Toolbox) Download() error {
 	t.TempDir = tempDir
 
 	// Download the file
-	resp, err := http.Get(t.URL)
-	if err != nil {
-		return fmt.Errorf("failed to download file: %w", err)
+	var rc io.ReadCloser
+	if strings.HasPrefix(t.URL, "file://") {
+		localPath := strings.TrimPrefix(t.URL, "file://")
+		file, err := os.Open(localPath)
+		if err != nil {
+			return fmt.Errorf("failed to open local file: %w", err)
+		}
+		rc = file
+	} else {
+		resp, err := http.Get(t.URL)
+		if err != nil {
+			return fmt.Errorf("failed to download file: %w", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return fmt.Errorf("bad status: %s", resp.Status)
+		}
+		rc = resp.Body
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
-	}
+	defer rc.Close()
 
 	// Create XZ reader
-	xzReader, err := xz.NewReader(resp.Body)
+	xzReader, err := xz.NewReader(rc)
 	if err != nil {
 		return fmt.Errorf("failed to create XZ reader: %w", err)
 	}
@@ -140,29 +151,69 @@ func (t *Toolbox) Cleanup() error {
 // PlaybookConfig is defined in playbook.go
 
 // GetDiagnosticCommands returns the predefined diagnostic commands with actual toolbox paths
-func (t *Toolbox) GetDiagnosticCommands() []DiagnosticCommand {
+func (t *Toolbox) GetDiagnosticCommands() ([]DiagnosticCommand, error) {
 	if t.TempDir == "" {
 		// Return empty slice if toolbox not downloaded yet
-		return []DiagnosticCommand{}
+		return []DiagnosticCommand{}, nil
 	}
 
 	cfg, err := loadDiagnosticsConfigEmbedded()
 	if err != nil {
-		return []DiagnosticCommand{}
+		return []DiagnosticCommand{}, err
 	}
 	// Store playbook on toolbox for later use (e.g., system prompt)
 	t.Playbook = cfg
 
 	toolboxPath := path.Join(t.TempDir, "toolbox")
-	prefix := fmt.Sprintf("%s/proot -b %s/nix:/nix %s/nix/store/", toolboxPath, toolboxPath, toolboxPath)
+	storeDir := filepath.Join(toolboxPath, "nix", "store")
+	prootPath := filepath.Join(toolboxPath, "proot")
+	prootPrefix := fmt.Sprintf("%s -b %s/nix:/nix", prootPath, toolboxPath)
 
 	var result []DiagnosticCommand
 	for i := range cfg.Commands {
 		c := cfg.Commands[i]
-		cmdStr := prefix + c.Command
+		parts := strings.Fields(c.Command)
+		if len(parts) == 0 {
+			return nil, fmt.Errorf("command '%s' is empty", c.Command)
+		}
+		binName := parts[0]
+		args := parts[1:]
+
+		// Try to locate the binary inside toolbox nix store under */bin or */sbin
+		resolved := ""
+		if entries, err := os.ReadDir(storeDir); err == nil {
+			for _, e := range entries {
+				if !e.IsDir() {
+					continue
+				}
+				candidate := filepath.Join(storeDir, e.Name(), "bin", binName)
+				if st, err := os.Stat(candidate); err == nil && !st.IsDir() && (st.Mode()&0o111 != 0) {
+					resolved = candidate
+					break
+				}
+				candidate = filepath.Join(storeDir, e.Name(), "sbin", binName)
+				if st, err := os.Stat(candidate); err == nil && !st.IsDir() && (st.Mode()&0o111 != 0) {
+					resolved = candidate
+					break
+				}
+			}
+		}
+
+		var cmdStr string
+		if resolved != "" {
+			if len(args) > 0 {
+				cmdStr = prootPrefix + " " + resolved + " " + strings.Join(args, " ")
+			} else {
+				cmdStr = prootPrefix + " " + resolved
+			}
+		} else {
+			return nil, fmt.Errorf("binary for command '%s' not found in toolbox nix store", binName)
+		}
+
 		if c.Sudo {
 			cmdStr = "sudo " + cmdStr
 		}
+
 		timeout := 5 * time.Second
 		if c.TimeoutSeconds > 0 {
 			timeout = time.Duration(c.TimeoutSeconds) * time.Second
@@ -174,7 +225,7 @@ func (t *Toolbox) GetDiagnosticCommands() []DiagnosticCommand {
 			Timeout: timeout,
 		})
 	}
-	return result
+	return result, nil
 }
 
 // loadDiagnosticsConfig reads diagnostics.yaml from the working directory or alongside the executable.
@@ -219,6 +270,14 @@ func (t *Toolbox) ExecuteDiagnosticCommand(cmd DiagnosticCommand) (string, error
 		return "", fmt.Errorf("toolbox not downloaded yet")
 	}
 
+	// If command resolution failed earlier, return a descriptive error now.
+	if strings.TrimSpace(cmd.Command) == "" {
+		if cmd.Spec != nil && cmd.Spec.Command != "" {
+			return "", fmt.Errorf("binary for command '%s' not found in toolbox nix store", cmd.Spec.Command)
+		}
+		return "", fmt.Errorf("command binary not found in toolbox nix store")
+	}
+
 	// Split the command into parts for exec.Command
 	parts := strings.Fields(cmd.Command)
 	if len(parts) == 0 {
@@ -253,7 +312,10 @@ func (t *Toolbox) ExecuteDiagnosticCommand(cmd DiagnosticCommand) (string, error
 
 // RunSpecificDiagnosticCommand runs a specific diagnostic command by its display name
 func (t *Toolbox) RunSpecificDiagnosticCommand(displayName string) (string, error) {
-	commands := t.GetDiagnosticCommands()
+	commands, err := t.GetDiagnosticCommands()
+	if err != nil {
+		return "", err
+	}
 
 	for _, cmd := range commands {
 		if cmd.Display == displayName {

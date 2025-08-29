@@ -25,11 +25,9 @@ type playbookConfig struct {
 func main() {
 	var yamlPath string
 	var outPath string
-	var workDir string
 
 	flag.StringVar(&yamlPath, "yaml", "", "Path to YAML with nixpkgs.packages")
 	flag.StringVar(&outPath, "out", "toolbox.tar.xz", "Output archive path")
-	flag.StringVar(&workDir, "workdir", ".", "Working directory where toolbox/ is created")
 	flag.Parse()
 
 	if yamlPath == "" {
@@ -49,16 +47,17 @@ func main() {
 		fatalf("no nixpkgs.packages listed in %s", yamlPath)
 	}
 
-	toolboxDir, _ := filepath.Abs(filepath.Join(workDir, "toolbox"))
-	_ = exec.Command("chmod", "-R", "u+w", toolboxDir).Run()
-	_ = exec.Command("rm", "-rf", toolboxDir).Run()
-
+	workDir, err := os.MkdirTemp("", "toolbox_work_*")
+	if err != nil {
+		fatalf("failed to create temporary workdir: %v", err)
+	}
 	defer func() {
-		_ = exec.Command("chmod", "-R", "u+w", toolboxDir).Run()
-		_ = exec.Command("rm", "-rf", toolboxDir).Run()
+		_ = exec.Command("chmod", "-R", "u+w", workDir).Run()
+		_ = exec.Command("rm", "-rf", workDir).Run()
 	}()
 
-	if err := nixCopy(toolboxDir, cfg.Nixpkgs.Packages); err != nil {
+	toolboxDir, _ := filepath.Abs(filepath.Join(workDir, "toolbox"))
+	if err := nixCopy(toolboxDir, cfg.Nixpkgs.Version, cfg.Nixpkgs.Packages); err != nil {
 		fatalf("nix copy failed: %v", err)
 	}
 
@@ -66,6 +65,12 @@ func main() {
 		fatalf("failed to install proot: %v", err)
 	}
 
+	// Include the playbook YAML inside the toolbox directory
+	if err := copyFile(yamlPath, filepath.Join(toolboxDir, "playbook.yaml"), 0o644); err != nil {
+		fatalf("failed to copy playbook YAML: %v", err)
+	}
+
+	outPath, _ = filepath.Abs(outPath)
 	if err := createTarXz(outPath, toolboxDir); err != nil {
 		fatalf("failed to create tar.xz: %v", err)
 	}
@@ -85,7 +90,7 @@ func readYAML(path string) (*playbookConfig, error) {
 	return &cfg, nil
 }
 
-func nixCopy(destDir string, pkgs []string) error {
+func nixCopy(destDir string, version string, pkgs []string) error {
 	if _, err := exec.LookPath("nix"); err != nil {
 		return fmt.Errorf("nix not found in PATH: %w", err)
 	}
@@ -95,8 +100,15 @@ func nixCopy(destDir string, pkgs []string) error {
 		"copy",
 		"--to", destDir,
 	}
+	// Build flake reference. If a version (commit SHA) is provided, pin to that revision.
+	// Otherwise, fall back to the registry alias "nixpkgs".
+	flakeRef := "nixpkgs"
+	if version != "" {
+		// Expecting a commit SHA; use the GitHub flake URL form.
+		flakeRef = "github:NixOS/nixpkgs/" + version
+	}
 	for _, p := range pkgs {
-		args = append(args, "nixpkgs#"+p)
+		args = append(args, flakeRef+"#"+p)
 	}
 	cmd := exec.Command("nix", args...)
 	cmd.Stdout = os.Stdout
@@ -193,6 +205,27 @@ func copyExecutable(src, dst string) error {
 	defer srcF.Close()
 
 	dstF, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(dstF, srcF); err != nil {
+		dstF.Close()
+		return err
+	}
+	return dstF.Close()
+}
+
+func copyFile(srcPath, dstPath string, perm os.FileMode) error {
+	if err := os.MkdirAll(filepath.Dir(dstPath), 0o755); err != nil {
+		return err
+	}
+	srcF, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer srcF.Close()
+
+	dstF, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, perm)
 	if err != nil {
 		return err
 	}

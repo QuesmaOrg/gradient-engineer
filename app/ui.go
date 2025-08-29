@@ -85,7 +85,7 @@ type model struct {
 // NewModel constructs a model initialised with all diagnostic commands in a
 // pending state.
 func NewModel(tb *Toolbox) *model {
-	cmds := tb.GetDiagnosticCommands()
+	cmds, _ := tb.GetDiagnosticCommands()
 	n := len(cmds)
 
 	vp := viewport.New(0, 0)
@@ -154,7 +154,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.downloaded = true
 		// Populate commands now that toolbox is available
-		m.commands = m.toolbox.GetDiagnosticCommands()
+		m.commands, _ = m.toolbox.GetDiagnosticCommands()
 		n := len(m.commands)
 		m.statuses = make([]commandStatus, n)
 		m.outputs = make([]string, n)
