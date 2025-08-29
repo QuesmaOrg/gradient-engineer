@@ -45,7 +45,7 @@ jobs:
         working-directory: app
         run: |
           mkdir -p ../dist
-          GOFLAGS="-trimpath" go build -ldflags="-s -w" -o ../dist/gradient-engineer .
+          GOFLAGS="-trimpath" go build -ldflags="-s -w" -o ../dist/gradient-engineer ./app
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
