@@ -13,7 +13,7 @@ func main() {
 	defer toolbox.Cleanup()
 
 	// Create and run the Bubble Tea program which will handle toolbox download and diagnostics
-	p := tea.NewProgram(NewModel(toolbox))
+	p := tea.NewProgram(NewModel(toolbox), tea.WithMouseCellMotion())
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("Error running Bubble Tea program: %v", err)
 	}

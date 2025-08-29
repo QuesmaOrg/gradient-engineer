@@ -88,13 +88,16 @@ func NewModel(tb *Toolbox) *model {
 	cmds := tb.GetDiagnosticCommands()
 	n := len(cmds)
 
+	vp := viewport.New(0, 0)
+	vp.MouseWheelEnabled = true
+
 	return &model{
 		toolbox:  tb,
 		commands: cmds,
 		statuses: make([]commandStatus, n),
 		outputs:  make([]string, n),
 		errors:   make([]error, n),
-		vp:       viewport.New(0, 0),
+		vp:       vp,
 		spin: func() spinner.Model {
 			s := spinner.New()
 			s.Spinner = spinner.MiniDot
@@ -248,6 +251,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		// Delegate other key events to the viewport for scrolling.
+		var cmd tea.Cmd
+		m.vp, cmd = m.vp.Update(msg)
+		return m, cmd
+
+	case tea.MouseMsg:
+		// Delegate mouse events (including wheel) to the viewport for scrolling.
 		var cmd tea.Cmd
 		m.vp, cmd = m.vp.Update(msg)
 		return m, cmd
