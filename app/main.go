@@ -9,7 +9,6 @@ import (
 func main() {
 	// Create a new toolbox instance
 	toolbox := NewToolbox("https://gradient.engineer/toolbox_v0.tar.xz")
-
 	defer toolbox.Cleanup()
 
 	// Create and run the Bubble Tea program which will handle toolbox download and diagnostics

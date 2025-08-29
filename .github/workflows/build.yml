@@ -31,21 +31,19 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: app/go.mod
+          go-version-file: go.mod
           check-latest: true
           cache: true
 
       - name: Show environment
-        working-directory: app
         run: |
           go version
           go env GOOS GOARCH
 
       - name: Build
-        working-directory: app
         run: |
-          mkdir -p ../dist
-          GOFLAGS="-trimpath" go build -ldflags="-s -w" -o ../dist/gradient-engineer ./app
+          mkdir -p dist
+          GOFLAGS="-trimpath" go build -ldflags="-s -w" -o dist/gradient-engineer ./app
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
