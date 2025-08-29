@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -35,15 +36,15 @@ func main() {
 
 	cfg, err := readPlaybook(playbookPath)
 	if err != nil {
-		fatalf("failed to read playbook: %v", err)
+		log.Fatalf("failed to read playbook: %v", err)
 	}
 	if len(cfg.Nixpkgs.Packages) == 0 {
-		fatalf("no nixpkgs.packages listed in %s", playbookPath)
+		log.Fatalf("no nixpkgs.packages listed in %s", playbookPath)
 	}
 
 	workDir, err := os.MkdirTemp("", "toolbox_work_*")
 	if err != nil {
-		fatalf("failed to create temporary workdir: %v", err)
+		log.Fatalf("failed to create temporary workdir: %v", err)
 	}
 	defer func() {
 		_ = exec.Command("chmod", "-R", "u+w", workDir).Run()
@@ -52,26 +53,26 @@ func main() {
 
 	toolboxDir, _ := filepath.Abs(filepath.Join(workDir, "toolbox"))
 	if err := nixCopy(toolboxDir, cfg.Nixpkgs.Version, cfg.Nixpkgs.Packages); err != nil {
-		fatalf("nix copy failed: %v", err)
+		log.Fatalf("nix copy failed: %v", err)
 	}
 
 	if err := fetchAndInstallProot(toolboxDir); err != nil {
-		fatalf("failed to install proot: %v", err)
+		log.Fatalf("failed to install proot: %v", err)
 	}
 
 	// Include the playbook file inside the toolbox directory
 	if err := copyFile(playbookPath, filepath.Join(toolboxDir, "playbook.yaml"), 0o644); err != nil {
-		fatalf("failed to copy playbook file: %v", err)
+		log.Fatalf("failed to copy playbook file: %v", err)
 	}
 
 	outDir, _ = filepath.Abs(outDir)
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
-		fatalf("failed to ensure output directory: %v", err)
+		log.Fatalf("failed to ensure output directory: %v", err)
 	}
 	archiveName := fmt.Sprintf("%s.%s.%s.tar.xz", cfg.ID, runtime.GOOS, runtime.GOARCH)
 	outPath := filepath.Join(outDir, archiveName)
 	if err := createTarXz(outPath, toolboxDir); err != nil {
-		fatalf("failed to create tar.xz: %v", err)
+		log.Fatalf("failed to create tar.xz: %v", err)
 	}
 
 	fmt.Printf("created %s\n", outPath)
@@ -118,7 +119,6 @@ func nixCopy(destDir string, version string, pkgs []string) error {
 func fetchAndInstallProot(destDir string) error {
 	arch := runtime.GOARCH
 	var url string
-	// Values provided by user; nix base32 style digests
 	switch arch {
 	case "amd64":
 		url = "https://web.archive.org/web/20240412082958if_/http://dl-cdn.alpinelinux.org/alpine/edge/testing/x86_64/proot-static-5.4.0-r0.apk"
@@ -242,9 +242,4 @@ func createTarXz(outPath string, dir string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
-}
-
-func fatalf(format string, a ...any) {
-	fmt.Fprintf(os.Stderr, format+"\n", a...)
-	os.Exit(1)
 }
