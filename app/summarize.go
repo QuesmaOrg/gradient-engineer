@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"gradient-engineer/playbook"
 	tea "github.com/charmbracelet/bubbletea"
 	anthropic "github.com/anthropics/anthropic-sdk-go"
 	anthopt "github.com/anthropics/anthropic-sdk-go/option"
@@ -16,7 +17,7 @@ import (
 // SummaryCommand represents a command's description and its captured output
 // used for generating an LLM summary.
 type SummaryCommand struct {
-	Description *PlaybookCommand
+	Description *playbook.PlaybookCommand
 	Output      string
 }
 

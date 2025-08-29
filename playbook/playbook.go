@@ -1,4 +1,4 @@
-package main
+package playbook
 
 type PlaybookConfig struct {
 	Nixpkgs struct {

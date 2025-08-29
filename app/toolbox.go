@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"gradient-engineer/playbook"
 	"github.com/ulikunitz/xz"
 	"gopkg.in/yaml.v3"
 )
@@ -21,7 +22,7 @@ import (
 type DiagnosticCommand struct {
 	Command string            // The actual command to execute
 	Display string            // Human-readable display name
-	Spec    *PlaybookCommand  // Pointer to the originating playbook command spec
+	Spec    *playbook.PlaybookCommand  // Pointer to the originating playbook command spec
 	Timeout time.Duration     // Timeout for the command execution
 }
 
@@ -29,7 +30,7 @@ type DiagnosticCommand struct {
 type Toolbox struct {
 	URL      string            // URL to download from
 	TempDir  string            // Temporary directory where toolbox is extracted
-	Playbook *PlaybookConfig   // Loaded playbook configuration
+	Playbook *playbook.PlaybookConfig   // Loaded playbook configuration
 }
 
 // NewToolbox creates a new Toolbox instance
@@ -148,7 +149,7 @@ func (t *Toolbox) Cleanup() error {
 	return nil
 }
 
-// PlaybookConfig is defined in playbook.go
+// PlaybookConfig is defined in playbook package
 
 // GetDiagnosticCommands returns the predefined diagnostic commands with actual toolbox paths
 func (t *Toolbox) GetDiagnosticCommands() ([]DiagnosticCommand, error) {
@@ -163,7 +164,7 @@ func (t *Toolbox) GetDiagnosticCommands() ([]DiagnosticCommand, error) {
 	if err != nil {
 		return []DiagnosticCommand{}, fmt.Errorf("failed to read playbook.yaml from toolbox: %w", err)
 	}
-	var cfg PlaybookConfig
+	var cfg playbook.PlaybookConfig
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return []DiagnosticCommand{}, fmt.Errorf("failed to parse playbook.yaml: %w", err)
 	}
