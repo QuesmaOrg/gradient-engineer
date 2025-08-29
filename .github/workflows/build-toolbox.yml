@@ -54,7 +54,7 @@ jobs:
         run: |
           set -euo pipefail
           cd toolbox
-          ./toolbox-builder -playbook ../playbook/60-second-linux.yaml -out .
+          ./toolbox-builder --playbook ../playbook/60-second-linux.yaml --out .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

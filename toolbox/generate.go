@@ -2,10 +2,8 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -13,38 +11,63 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 	"gradient-engineer/playbook"
 )
 
+var (
+	playbookPath string
+	outDir       string
+)
+
 func main() {
-	var playbookPath string
-	var outDir string
-
-	flag.StringVar(&playbookPath, "playbook", "", "Path to playbook file")
-	flag.StringVar(&outDir, "out", ".", "Output directory")
-	flag.Parse()
-
-	if playbookPath == "" {
-		fmt.Fprintln(os.Stderr, "error: -playbook path is required")
-		os.Exit(2)
+	var rootCmd = &cobra.Command{
+		Use:   "toolbox-generator [flags]",
+		Short: "Generate toolbox archives from playbook configurations",
+		Long: `Toolbox Generator creates portable toolbox archives containing Nix packages
+and diagnostic tools defined in playbook configurations. The generated archives
+include all necessary dependencies and can be distributed and executed on
+target systems.`,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if playbookPath == "" {
+				return fmt.Errorf("playbook path is required")
+			}
+			if runtime.GOOS != "linux" {
+				return fmt.Errorf("this utility must run on Linux")
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return generateToolbox()
+		},
 	}
-	if runtime.GOOS != "linux" {
-		fmt.Fprintln(os.Stderr, "error: this utility must run on Linux")
-		os.Exit(2)
-	}
 
+	// Define flags
+	rootCmd.Flags().StringVarP(&playbookPath, "playbook", "p", "", "Path to playbook file (required)")
+	rootCmd.Flags().StringVarP(&outDir, "out", "o", ".", "Output directory for generated archive")
+	
+	// Mark required flags
+	rootCmd.MarkFlagRequired("playbook")
+
+	// Execute the command
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
+}
+
+func generateToolbox() error {
 	cfg, err := readPlaybook(playbookPath)
 	if err != nil {
-		log.Fatalf("failed to read playbook: %v", err)
+		return fmt.Errorf("failed to read playbook: %w", err)
 	}
 	if len(cfg.Nixpkgs.Packages) == 0 {
-		log.Fatalf("no nixpkgs.packages listed in %s", playbookPath)
+		return fmt.Errorf("no nixpkgs.packages listed in %s", playbookPath)
 	}
 
 	workDir, err := os.MkdirTemp("", "toolbox_work_*")
 	if err != nil {
-		log.Fatalf("failed to create temporary workdir: %v", err)
+		return fmt.Errorf("failed to create temporary workdir: %w", err)
 	}
 	defer func() {
 		_ = exec.Command("chmod", "-R", "u+w", workDir).Run()
@@ -53,29 +76,30 @@ func main() {
 
 	toolboxDir, _ := filepath.Abs(filepath.Join(workDir, "toolbox"))
 	if err := nixCopy(toolboxDir, cfg.Nixpkgs.Version, cfg.Nixpkgs.Packages); err != nil {
-		log.Fatalf("nix copy failed: %v", err)
+		return fmt.Errorf("nix copy failed: %w", err)
 	}
 
 	if err := fetchAndInstallProot(toolboxDir); err != nil {
-		log.Fatalf("failed to install proot: %v", err)
+		return fmt.Errorf("failed to install proot: %w", err)
 	}
 
 	// Include the playbook file inside the toolbox directory
 	if err := copyFile(playbookPath, filepath.Join(toolboxDir, "playbook.yaml"), 0o644); err != nil {
-		log.Fatalf("failed to copy playbook file: %v", err)
+		return fmt.Errorf("failed to copy playbook file: %w", err)
 	}
 
 	outDir, _ = filepath.Abs(outDir)
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
-		log.Fatalf("failed to ensure output directory: %v", err)
+		return fmt.Errorf("failed to ensure output directory: %w", err)
 	}
 	archiveName := fmt.Sprintf("%s.%s.%s.tar.xz", cfg.ID, runtime.GOOS, runtime.GOARCH)
 	outPath := filepath.Join(outDir, archiveName)
 	if err := createTarXz(outPath, toolboxDir); err != nil {
-		log.Fatalf("failed to create tar.xz: %v", err)
+		return fmt.Errorf("failed to create tar.xz: %w", err)
 	}
 
 	fmt.Printf("created %s\n", outPath)
+	return nil
 }
 
 func readPlaybook(path string) (*playbook.PlaybookConfig, error) {

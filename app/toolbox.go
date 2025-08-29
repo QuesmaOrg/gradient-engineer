@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -34,7 +35,9 @@ type Toolbox struct {
 }
 
 // NewToolbox creates a new Toolbox instance
-func NewToolbox(url string) *Toolbox {
+func NewToolbox(toolboxRepo, playbookName string) *Toolbox {
+	// Construct the toolbox URL using the specified format
+	url := fmt.Sprintf("%s%s.%s.%s.tar.xz", toolboxRepo, playbookName, runtime.GOOS, runtime.GOARCH)
 	return &Toolbox{
 		URL: url,
 	}
