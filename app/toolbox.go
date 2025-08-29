@@ -1,4 +1,4 @@
-package toolbox
+package main
 
 import (
 	"archive/tar"
