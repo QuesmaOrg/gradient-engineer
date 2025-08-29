@@ -46,13 +46,13 @@ jobs:
         run: |
           set -euo pipefail
           cd toolbox
-          ./toolbox-builder -playbook ../playbook/60-second-linux.yaml -out toolbox-${{ matrix.arch_tag }}.tar.xz
+          ./toolbox-builder -playbook ../playbook/60-second-linux.yaml -out .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: toolbox-${{ matrix.arch_tag }}
-          path: toolbox/toolbox-${{ matrix.arch_tag }}.tar.xz
+          path: toolbox/*.tar.xz
           if-no-files-found: error
           retention-days: 7
 

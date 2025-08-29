@@ -18,10 +18,10 @@ import (
 
 func main() {
 	var playbookPath string
-	var outPath string
+	var outDir string
 
 	flag.StringVar(&playbookPath, "playbook", "", "Path to playbook file")
-	flag.StringVar(&outPath, "out", "toolbox.tar.xz", "Output archive path")
+	flag.StringVar(&outDir, "out", ".", "Output directory")
 	flag.Parse()
 
 	if playbookPath == "" {
@@ -64,7 +64,12 @@ func main() {
 		fatalf("failed to copy playbook file: %v", err)
 	}
 
-	outPath, _ = filepath.Abs(outPath)
+	outDir, _ = filepath.Abs(outDir)
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		fatalf("failed to ensure output directory: %v", err)
+	}
+	archiveName := fmt.Sprintf("%s.%s.%s.tar.xz", cfg.ID, runtime.GOOS, runtime.GOARCH)
+	outPath := filepath.Join(outDir, archiveName)
 	if err := createTarXz(outPath, toolboxDir); err != nil {
 		fatalf("failed to create tar.xz: %v", err)
 	}

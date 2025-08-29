@@ -1,4 +1,4 @@
-name: Build binaries
+name: Build app
 
 on:
   push:
