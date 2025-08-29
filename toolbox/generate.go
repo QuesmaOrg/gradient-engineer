@@ -17,15 +17,15 @@ import (
 )
 
 func main() {
-	var yamlPath string
+	var playbookPath string
 	var outPath string
 
-	flag.StringVar(&yamlPath, "yaml", "", "Path to YAML with nixpkgs.packages")
+	flag.StringVar(&playbookPath, "playbook", "", "Path to playbook file")
 	flag.StringVar(&outPath, "out", "toolbox.tar.xz", "Output archive path")
 	flag.Parse()
 
-	if yamlPath == "" {
-		fmt.Fprintln(os.Stderr, "error: -yaml path is required")
+	if playbookPath == "" {
+		fmt.Fprintln(os.Stderr, "error: -playbook path is required")
 		os.Exit(2)
 	}
 	if runtime.GOOS != "linux" {
@@ -33,12 +33,12 @@ func main() {
 		os.Exit(2)
 	}
 
-	cfg, err := readYAML(yamlPath)
+	cfg, err := readPlaybook(playbookPath)
 	if err != nil {
-		fatalf("failed to read YAML: %v", err)
+		fatalf("failed to read playbook: %v", err)
 	}
 	if len(cfg.Nixpkgs.Packages) == 0 {
-		fatalf("no nixpkgs.packages listed in %s", yamlPath)
+		fatalf("no nixpkgs.packages listed in %s", playbookPath)
 	}
 
 	workDir, err := os.MkdirTemp("", "toolbox_work_*")
@@ -59,9 +59,9 @@ func main() {
 		fatalf("failed to install proot: %v", err)
 	}
 
-	// Include the playbook YAML inside the toolbox directory
-	if err := copyFile(yamlPath, filepath.Join(toolboxDir, "playbook.yaml"), 0o644); err != nil {
-		fatalf("failed to copy playbook YAML: %v", err)
+	// Include the playbook file inside the toolbox directory
+	if err := copyFile(playbookPath, filepath.Join(toolboxDir, "playbook.yaml"), 0o644); err != nil {
+		fatalf("failed to copy playbook file: %v", err)
 	}
 
 	outPath, _ = filepath.Abs(outPath)
@@ -72,7 +72,7 @@ func main() {
 	fmt.Printf("created %s\n", outPath)
 }
 
-func readYAML(path string) (*playbook.PlaybookConfig, error) {
+func readPlaybook(path string) (*playbook.PlaybookConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
