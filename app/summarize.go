@@ -88,7 +88,7 @@ func NewSummarizer() *Summarizer {
 		// OpenRouter attribution headers
 		opts = append(opts,
 			openaiopt.WithHeader("X-Title", "gradient-engineer"),
-			openaiopt.WithHeader("HTTP-Referer", "https://github.com/QuesmaOrg/gradient-engineer"),
+			openaiopt.WithHeader("HTTP-Referer", "https://gradient.engineer"),
 		)
 	} else if openAIKey != "" {
 		opts = append(opts, openaiopt.WithAPIKey(openAIKey))
