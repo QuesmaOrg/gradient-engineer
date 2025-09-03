@@ -154,7 +154,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.downloaded = true
 		// Populate commands now that toolbox is available
-		m.commands, _ = m.toolbox.GetDiagnosticCommands()
+		commands, err := m.toolbox.GetDiagnosticCommands()
+		if err != nil {
+			fmt.Println(err)
+			m.done = true
+			return m, tea.Quit
+		}
+		m.commands = commands
 		n := len(m.commands)
 		m.statuses = make([]commandStatus, n)
 		m.outputs = make([]string, n)

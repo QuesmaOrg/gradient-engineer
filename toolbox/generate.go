@@ -11,9 +11,10 @@ import (
 	"runtime"
 	"time"
 
+	"gradient-engineer/playbook"
+
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
-	"gradient-engineer/playbook"
 )
 
 var (
@@ -33,9 +34,6 @@ target systems.`,
 			if playbookPath == "" {
 				return fmt.Errorf("playbook path is required")
 			}
-			if runtime.GOOS != "linux" {
-				return fmt.Errorf("this utility must run on Linux")
-			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -46,7 +44,7 @@ target systems.`,
 	// Define flags
 	rootCmd.Flags().StringVarP(&playbookPath, "playbook", "p", "", "Path to playbook file (required)")
 	rootCmd.Flags().StringVarP(&outDir, "out", "o", ".", "Output directory for generated archive")
-	
+
 	// Mark required flags
 	rootCmd.MarkFlagRequired("playbook")
 
@@ -61,8 +59,10 @@ func generateToolbox() error {
 	if err != nil {
 		return fmt.Errorf("failed to read playbook: %w", err)
 	}
-	if len(cfg.Nixpkgs.Packages) == 0 {
-		return fmt.Errorf("no nixpkgs.packages listed in %s", playbookPath)
+	if runtime.GOOS == "linux" {
+		if len(cfg.Nixpkgs.Packages) == 0 {
+			return fmt.Errorf("no nixpkgs.packages listed in %s", playbookPath)
+		}
 	}
 
 	workDir, err := os.MkdirTemp("", "toolbox_work_*")
@@ -75,12 +75,15 @@ func generateToolbox() error {
 	}()
 
 	toolboxDir, _ := filepath.Abs(filepath.Join(workDir, "toolbox"))
-	if err := nixCopy(toolboxDir, cfg.Nixpkgs.Version, cfg.Nixpkgs.Packages); err != nil {
-		return fmt.Errorf("nix copy failed: %w", err)
-	}
 
-	if err := fetchAndInstallProot(toolboxDir); err != nil {
-		return fmt.Errorf("failed to install proot: %w", err)
+	if runtime.GOOS == "linux" {
+		if err := nixCopy(toolboxDir, cfg.Nixpkgs.Version, cfg.Nixpkgs.Packages); err != nil {
+			return fmt.Errorf("nix copy failed: %w", err)
+		}
+
+		if err := fetchAndInstallProot(toolboxDir); err != nil {
+			return fmt.Errorf("failed to install proot: %w", err)
+		}
 	}
 
 	// Include the playbook file inside the toolbox directory
@@ -261,7 +264,15 @@ func createTarXz(outPath string, dir string) error {
 	parent := filepath.Dir(dir)
 	base := filepath.Base(dir)
 
-	cmd := exec.Command("tar", "-I", "xz -e -9 -T0", "-cf", outPath, base)
+	if runtime.GOOS == "linux" {
+		cmd := exec.Command("tar", "-I", "xz -e -9 -T0", "-cf", outPath, base)
+		cmd.Dir = parent
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		return cmd.Run()
+	}
+
+	cmd := exec.Command("tar", "-cJf", outPath, "--options", "xz:compression-level=9", base)
 	cmd.Dir = parent
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

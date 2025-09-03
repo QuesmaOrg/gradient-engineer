@@ -23,7 +23,7 @@ BIN="$TMPDIR/gradient-engineer"
 
 curl -fsSL -o "$BIN" "https://gradient.engineer/binary/gradient-engineer.${OS}.${ARCH}"
 chmod +x "$BIN"
-"$BIN" 60-second-linux
+"$BIN" "60-second-$OS"
 
 rm -f "$BIN"
 rmdir "$TMPDIR"

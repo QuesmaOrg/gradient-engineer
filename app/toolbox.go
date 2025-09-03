@@ -14,9 +14,10 @@ import (
 	"strings"
 	"time"
 
+	"gradient-engineer/playbook"
+
 	"github.com/ulikunitz/xz"
 	"gopkg.in/yaml.v3"
-	"gradient-engineer/playbook"
 )
 
 // DiagnosticCommand represents a diagnostic command with its actual command and display name
@@ -217,7 +218,11 @@ func (t *Toolbox) GetDiagnosticCommands() ([]DiagnosticCommand, error) {
 				cmdStr = prootPrefix + " " + resolved
 			}
 		} else {
-			return nil, fmt.Errorf("binary for command '%s' not found in toolbox nix store", binName)
+			if runtime.GOOS == "darwin" {
+				cmdStr = c.Command // Nix + PRoot not available on macOS
+			} else {
+				return nil, fmt.Errorf("binary for command '%s' not found in toolbox nix store", binName)
+			}
 		}
 
 		timeout := 5 * time.Second

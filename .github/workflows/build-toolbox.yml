@@ -22,12 +22,12 @@ jobs:
           - runner: ubuntu-24.04-arm
             os: linux
             arch: arm64
-          # - runner: macos-13
-          #   os: darwin
-          #   arch: amd64
-          # - runner: macos-15
-          #   os: darwin
-          #   arch: arm64
+          - runner: macos-13
+            os: darwin
+            arch: amd64
+          - runner: macos-15
+            os: darwin
+            arch: arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -49,12 +49,21 @@ jobs:
           cd toolbox
           go build -o toolbox-builder
 
-      - name: Build toolbox archive
+      - name: Build toolbox archive (Linux)
+        if: matrix.os == 'linux'
         shell: bash
         run: |
           set -euo pipefail
           cd toolbox
           ./toolbox-builder --playbook ../playbook/60-second-linux.yaml --out .
+
+      - name: Build toolbox archive (Darwin)
+        if: matrix.os == 'darwin'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd toolbox
+          ./toolbox-builder --playbook ../playbook/60-second-darwin.yaml --out .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -1,0 +1,35 @@
+id: 60-second-darwin
+system_prompt: |
+  ### 60-second macOS analysis
+
+  Please analyze the following macOS system diagnostic output. Focus on identifying any performance issues, errors, or notable system characteristics.
+
+  - Be concise but comprehensive
+  - Start with a 1-sentence overview and the key finding
+  - Prefer bullet points where helpful
+  - Keep the total length to 2-3 short paragraphs (including bullets)
+
+  When recommending actions, prioritize practical steps.
+commands:
+  - command: uptime
+    description: System uptime and load averages
+  - command: log show --style syslog --last 1m
+    description: Recent system log entries (last 1 minute)
+  - command: vm_stat 1
+    description: Virtual memory paging, 1s updates
+  - command: ps -M -o pid,%cpu,comm -r
+    description: Threads sorted by CPU to spot hot single-thread bottlenecks
+  - command: top -l 999 -s 1 -o cpu
+    description: Per-process CPU usage, 1s rolling view
+  - command: iostat -d -w 1
+    description: Disk I/O per device, 1s updates (KB/t, tps, MB/s)
+  - command: memory_pressure -Q
+    description: Memory pressure summary (free, purgeable, compressed)
+  - command: netstat -w 1 -i
+    description: Network device statistics for all interfaces, 1s updates
+  - command: netstat -s -p tcp
+    description: TCP health snapshot (retransmits, connection stats)
+  - command: top -l 1
+    description: One-shot system snapshot (CPU breakdown, processes, PhysMem)
+
+
