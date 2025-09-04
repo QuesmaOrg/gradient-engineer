@@ -1,3 +1,7 @@
+<p align="center">
+<img width="50%" alt="gradient engineer" src="https://github.com/user-attachments/assets/c31423bd-506a-48c2-915c-d867586e2769" />
+</p>
+
 # Gradient Engineer — 60‑Second Linux Analysis (Nix + LLM)
 
 Run the classic [“60‑second Linux Performance Analysis”](https://netflixtechblog.com/linux-performance-analysis-in-60-000-milliseconds-accc10403c55) checklist in one command. A portable Nix toolbox is downloaded on the fly, diagnostics run in parallel with a simple TUI, and an optional AI summary is shown at the end.
