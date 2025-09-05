@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"runtime"
 
 	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/spf13/cobra"
@@ -13,14 +14,23 @@ var (
 
 func main() {
 	var rootCmd = &cobra.Command{
-		Use:   "gradient-engineer [flags] PLAYBOOK_NAME",
+		Use:   "gradient-engineer [flags] [PLAYBOOK_NAME]",
 		Short: "Run diagnostic playbooks using gradient engineer toolbox",
 		Long: `Gradient Engineer runs diagnostic playbooks by downloading and executing
 toolbox commands. The toolbox is automatically downloaded from the specified
 repository based on your platform (OS and architecture).`,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			playbookName := args[0]
+			var playbookName string
+			if len(args) > 0 {
+				playbookName = args[0]
+			} else {
+				if runtime.GOOS == "linux" {
+					playbookName = "60-second-linux"
+				} else {
+					playbookName = "60-second-darwin"
+				}
+			}
 
 			// Create a new toolbox instance
 			tb := NewToolbox(toolboxRepo, playbookName)
