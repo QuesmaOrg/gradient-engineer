@@ -35,7 +35,7 @@ Notes:
 ```bash
 cd app
 go build -o gradient-engineer-go
-./gradient-engineer-go
+./gradient-engineer-go 60-second-linux
 ```
 
 ## Advanced
