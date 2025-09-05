@@ -364,14 +364,25 @@ func (m *model) generateContent() string {
 	cmdBuf.WriteString(cmdStr)
 
 	// Border the commands with a title (plain header, with spinner while running or a tick when finished)
-	headerTitle := titleStyle.Render("60-second Linux analysis")
 	var header string
-	if m.execSeconds == 0 {
-		header = fmt.Sprintf("%s %s", m.spin.View(), headerTitle)
-	} else {
-		header = fmt.Sprintf("%s %s %s", successStyle.Render(iconSuccess), headerTitle, descStyle.Render(fmt.Sprintf("(finished in %.1f seconds)", m.execSeconds)))
+	title := ""
+	if m.toolbox != nil && m.toolbox.Playbook != nil && strings.TrimSpace(m.toolbox.Playbook.Name) != "" {
+		title = m.toolbox.Playbook.Name
 	}
-	commandsBox := header + "\n\n" + cmdBuf.String()
+	if title != "" {
+		headerTitle := titleStyle.Render(title)
+		if m.execSeconds == 0 {
+			header = fmt.Sprintf("%s %s", m.spin.View(), headerTitle)
+		} else {
+			header = fmt.Sprintf("%s %s %s", successStyle.Render(iconSuccess), headerTitle, descStyle.Render(fmt.Sprintf("(finished in %.1f seconds)", m.execSeconds)))
+		}
+	}
+	var commandsBox string
+	if header != "" {
+		commandsBox = header + "\n\n" + cmdBuf.String()
+	} else {
+		commandsBox = cmdBuf.String()
+	}
 
 	// Assemble full UI
 	var b strings.Builder

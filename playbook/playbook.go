@@ -2,6 +2,7 @@ package playbook
 
 type PlaybookConfig struct {
 	ID      string `yaml:"id"`
+	Name    string `yaml:"name,omitempty"`
 	Nixpkgs struct {
 		Version  string   `yaml:"version"`
 		Packages []string `yaml:"packages"`
