@@ -14,8 +14,7 @@ import (
 )
 
 var (
-	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
-	headerStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("0")) // foreground black; background will be per-char gradient
+	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("255"))
 	pendingStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	runningStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
 	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
@@ -81,6 +80,12 @@ type model struct {
 	done bool
 
 	summarizer *Summarizer
+
+	// Time it took to execute all commands (seconds), captured when summarization starts
+	execSeconds float64
+
+	// Request a one-time scroll to bottom after next SetContent in View
+	requestScrollToBottom bool
 }
 
 // NewModel constructs a model initialised with all diagnostic commands in a
@@ -195,6 +200,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if allDone {
 			if !m.summarizing && m.summary == "" {
+				m.execSeconds = time.Since(m.startTime).Seconds()
+				m.requestScrollToBottom = true
 				// If summarizer is disabled (no API key), skip summarization and show a notice.
 				if m.summarizer == nil || m.summarizer.disabled {
 					m.summaryNotice = "No API key provided; skipping AI summary.\nSet the API key with OPENAI_API_KEY, OPENROUTER_API_KEY, or ANTHROPIC_API_KEY."
@@ -277,6 +284,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *model) View() string {
 	// Build the content string and assign it to the viewport.
 	m.vp.SetContent(m.generateContent())
+	if m.requestScrollToBottom {
+		m.vp.GotoBottom()
+		m.requestScrollToBottom = false
+	}
 	return m.vp.View()
 }
 
@@ -348,22 +359,35 @@ func (m *model) generateContent() string {
 	}
 
 	// Strip final \n from cmdBuf if present
-	cmdStr := cmdBuf.String()
-	if strings.HasSuffix(cmdStr, "\n") {
-		cmdStr = cmdStr[:len(cmdStr)-1]
-	}
+	cmdStr := strings.TrimSuffix(cmdBuf.String(), "\n")
 	cmdBuf.Reset()
 	cmdBuf.WriteString(cmdStr)
 
-	// Border the commands with a title
-	sectionTitle := renderGradientHeader(" 60-second Linux analysis ", time.Since(m.startTime).Seconds())
-	commandsBox := sectionTitle + "\n\n" + cmdBuf.String()
+	// Border the commands with a title (plain header, with spinner while running or a tick when finished)
+	headerTitle := titleStyle.Render("60-second Linux analysis")
+	var header string
+	if m.execSeconds == 0 {
+		header = fmt.Sprintf("%s %s", m.spin.View(), headerTitle)
+	} else {
+		header = fmt.Sprintf("%s %s %s", successStyle.Render(iconSuccess), headerTitle, descStyle.Render(fmt.Sprintf("(finished in %.1f seconds)", m.execSeconds)))
+	}
+	commandsBox := header + "\n\n" + cmdBuf.String()
 
 	// Assemble full UI
 	var b strings.Builder
 	b.WriteString(generateBanner(time.Since(m.startTime).Seconds()))
+
 	b.WriteString("\n")
+	b.WriteString(footerStyle.Render("Tab: toggle details; q: quit; up/down or mouse: scroll"))
+
+	b.WriteString("\n\n")
 	b.WriteString(commandsBox)
+
+	// If we have finished executing commands, show the elapsed time above the summary section
+	if m.execSeconds > 0 {
+		b.WriteString("\n\n")
+		b.WriteString(successStyle.Render(fmt.Sprintf("Executing commands finished in %.1f seconds.", m.execSeconds)))
+	}
 
 	if m.summarizing {
 		b.WriteString("\n\n")
@@ -383,10 +407,6 @@ func (m *model) generateContent() string {
 		b.WriteString("\n\n")
 		b.WriteString(errorStyle.Render(fmt.Sprintf("LLM error: %v", m.summaryErr)))
 	}
-
-	b.WriteString("\n\n")
-	b.WriteString(footerStyle.Render("Tab: toggle details; q: quit; up/down or mouse: scroll"))
-	b.WriteString("\n")
 
 	return b.String()
 }
