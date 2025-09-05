@@ -12,24 +12,24 @@ system_prompt: |
   When recommending actions, prioritize practical steps.
 commands:
   - command: uptime
-    description: System uptime and load averages
+    description: System uptime, load averages
   - command: log show --style syslog --last 1m
-    description: Recent system log entries (last 1 minute)
+    description: Recent system log entries
   - command: vm_stat 1
-    description: Virtual memory paging, 1s updates
+    description: Virtual memory paging
   - command: ps -M -o pid,%cpu,comm -r
-    description: Threads sorted by CPU to spot hot single-thread bottlenecks
+    description: Threads sorted by CPU
   - command: top -l 999 -s 1 -o cpu
-    description: Per-process CPU usage, 1s rolling view
+    description: Per-process CPU usage
   - command: iostat -d -w 1
-    description: Disk I/O per device, 1s updates (KB/t, tps, MB/s)
+    description: Disk I/O per device
   - command: memory_pressure -Q
-    description: Memory pressure summary (free, purgeable, compressed)
+    description: Memory pressure summary
   - command: netstat -w 1 -i
-    description: Network device statistics for all interfaces, 1s updates
+    description: Network device statistics
   - command: netstat -s -p tcp
-    description: TCP health snapshot (retransmits, connection stats)
+    description: TCP health snapshot
   - command: top -l 1
-    description: One-shot system snapshot (CPU breakdown, processes, PhysMem)
+    description: Top processes snapshot
 
 
