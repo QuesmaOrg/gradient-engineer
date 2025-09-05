@@ -1,4 +1,5 @@
 id: 60-second-darwin
+name: 60-second macOS analysis
 system_prompt: |
   ### 60-second macOS analysis
 
