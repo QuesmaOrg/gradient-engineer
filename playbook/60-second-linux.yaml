@@ -19,21 +19,21 @@ system_prompt: |
   When recommending actions, prioritize practical steps.
 commands:
   - command: uptime
-    description: System uptime and load averages
+    description: System uptime, load averages
   - command: vmstat 1
-    description: Virtual memory statistics, 1s updates
+    description: Virtual memory statistics
   - command: mpstat -P ALL 1
-    description: CPU utilization per core, 1s
+    description: CPU utilization per core
   - command: pidstat 1
-    description: Per-process CPU usage, 1s
+    description: Per-process CPU usage
   - command: iostat -xz 1
-    description: Extended I/O statistics, 1s
+    description: Extended I/O statistics
   - command: free -m
-    description: Memory usage in MiB
+    description: Memory usage
   - command: sar -n DEV 1
-    description: Network device statistics, 1s
+    description: Network device statistics
   - command: sar -n TCP,ETCP 1
-    description: TCP counters and errors, 1s
+    description: TCP counters and errors
   - command: top -b -n 1
     description: Top processes snapshot
   - command: dmesg

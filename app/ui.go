@@ -21,6 +21,7 @@ var (
 	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
 	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
 	footerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("250")).Italic(true)
+	descStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
 )
 
 // commandStatus represents the execution status of a diagnostic command.
@@ -318,7 +319,16 @@ func (m *model) generateContent() string {
 		default:
 			lineStyle = pendingStyle
 		}
-		cmdBuf.WriteString(lineStyle.Render(fmt.Sprintf("%s %s", icon, cmd.Display)))
+		// Render command and lighter description
+		cmdText := cmd.Command
+		if cmd.Spec != nil && strings.TrimSpace(cmd.Spec.Command) != "" {
+			cmdText = cmd.Spec.Command
+		}
+		line := lineStyle.Render(fmt.Sprintf("%s %s", icon, cmdText))
+		if strings.TrimSpace(cmd.Display) != "" {
+			line += " " + descStyle.Render("— "+cmd.Display)
+		}
+		cmdBuf.WriteString(line)
 		cmdBuf.WriteString("\n")
 
 		if m.showDetails {
