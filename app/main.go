@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +35,7 @@ repository based on your platform (OS and architecture).`,
 	}
 
 	// Define flags
-	rootCmd.Flags().StringVar(&toolboxRepo, "toolbox-repo", "https://gradient.engineer/toolbox/", 
+	rootCmd.Flags().StringVar(&toolboxRepo, "toolbox-repo", "https://gradient.engineer/toolbox/",
 		"Toolbox repository URL or path (e.g., file:///home/user/mytoolboxes/)")
 
 	// Execute the command
