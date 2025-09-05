@@ -1,5 +1,5 @@
 <p align="center">
-<img width="50%" alt="gradient engineer" src="https://github.com/user-attachments/assets/c31423bd-506a-48c2-915c-d867586e2769" />
+<img width="50%" alt="gradient engineer" src="https://github.com/user-attachments/assets/b3e10245-205d-40e9-828c-3c8ac1163830" />
 </p>
 
 # Gradient Engineer — 60‑Second Linux Analysis (Nix + LLM)
