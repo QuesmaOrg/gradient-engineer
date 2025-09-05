@@ -461,7 +461,9 @@ func hsvToRGB(h, s, v float64) (uint8, uint8, uint8) {
 func renderGradientHeader(text string, t float64) string {
 	var b strings.Builder
 	for i, ch := range text {
-		progress := math.Mod(float64(i)/100+t*0.07, 1.0)
+		progress := float64(i)/100 + t*-0.07
+		progress += math.Ceil(math.Abs(progress))
+		progress = math.Mod(progress, 1.0)
 		hue := progress * 360.0
 		// lower brightness for less intense colors
 		r, g, c := hsvToRGB(hue, 0.8, 0.5)
@@ -479,7 +481,9 @@ func generateBanner(t float64) string {
 	var b strings.Builder
 	for _, line := range bannerLines {
 		for i, ch := range line {
-			progress := math.Mod(float64(i)/float64(len(line))+t*0.07+0.5, 1.0)
+			progress := float64(i)/float64(len(line)) + t*-0.07 + 0.5
+			progress += math.Ceil(math.Abs(progress))
+			progress = math.Mod(progress, 1.0)
 			hue := progress * 360.0
 			r, g, cc := hsvToRGB(hue, 1.0, 1.0)
 			colorStr := fmt.Sprintf("#%02X%02X%02X", r, g, cc)
