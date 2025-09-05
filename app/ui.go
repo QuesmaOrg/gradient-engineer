@@ -196,7 +196,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if !m.summarizing && m.summary == "" {
 				// If summarizer is disabled (no API key), skip summarization and show a notice.
 				if m.summarizer == nil || m.summarizer.disabled {
-					m.summaryNotice = "No API key provided; skipping AI summary."
+					m.summaryNotice = "No API key provided; skipping AI summary.\nSet the API key with OPENAI_API_KEY, OPENROUTER_API_KEY, or ANTHROPIC_API_KEY."
 					return m, nil
 				}
 				m.summarizing = true
