@@ -20,7 +20,7 @@ var (
 	runningStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
 	successStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
 	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
-	footerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Italic(true)
+	footerStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("250")).Italic(true)
 )
 
 // commandStatus represents the execution status of a diagnostic command.
@@ -352,7 +352,7 @@ func (m *model) generateContent() string {
 	// Assemble full UI
 	var b strings.Builder
 	b.WriteString(generateBanner(time.Since(m.startTime).Seconds()))
-	b.WriteString("\n\n")
+	b.WriteString("\n")
 	b.WriteString(commandsBox)
 
 	if m.summarizing {
@@ -375,7 +375,7 @@ func (m *model) generateContent() string {
 	}
 
 	b.WriteString("\n\n")
-	b.WriteString(footerStyle.Render("Tab: toggle details   q: quit"))
+	b.WriteString(footerStyle.Render("Tab: toggle details; q: quit; up/down or mouse: scroll"))
 	b.WriteString("\n")
 
 	return b.String()
@@ -392,24 +392,14 @@ func indent(text, prefix string) string {
 
 // ASCII banner lines for Gradient Engineer logo.
 var bannerLines = []string{
-	"                                      ░██ ░██                         ░██     ",
-	"                                      ░██                             ░██     ",
-	" ░████████ ░██░████  ░██████    ░████████ ░██ ░███████  ░████████  ░████████  ",
-	"░██    ░██ ░███           ░██  ░██    ░██ ░██░██    ░██ ░██    ░██    ░██     ",
-	"░██    ░██ ░██       ░███████  ░██    ░██ ░██░█████████ ░██    ░██    ░██     ",
-	"░██   ░███ ░██      ░██   ░██  ░██   ░███ ░██░██        ░██    ░██    ░██     ",
-	" ░█████░██ ░██       ░█████░██  ░█████░██ ░██ ░███████  ░██    ░██     ░████  ",
-	"       ░██                                                                    ",
-	" ░███████                                                                     ",
-	"                                 ░██                                          ",
-	"                                                                              ",
-	" ░███████  ░████████   ░████████ ░██░████████   ░███████   ░███████  ░██░████ ",
-	"░██    ░██ ░██    ░██ ░██    ░██ ░██░██    ░██ ░██    ░██ ░██    ░██ ░███     ",
-	"░█████████ ░██    ░██ ░██    ░██ ░██░██    ░██ ░█████████ ░█████████ ░██      ",
-	"░██        ░██    ░██ ░██   ░███ ░██░██    ░██ ░██        ░██        ░██      ",
-	" ░███████  ░██    ░██  ░█████░██ ░██░██    ░██  ░███████   ░███████  ░██      ",
-	"                             ░██                                              ",
-	"                       ░███████                                               ",
+	"  ▗▄▄▖▗▄▄▖  ▗▄▖ ▗▄▄▄ ▗▄▄▄▖▗▄▄▄▖▗▖  ▗▖▗▄▄▄▖ ",
+	" ▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌  █  █  ▐▌   ▐▛▚▖▐▌  █   ",
+	" ▐▌▝▜▌▐▛▀▚▖▐▛▀▜▌▐▌  █  █  ▐▛▀▀▘▐▌ ▝▜▌  █   ",
+	" ▝▚▄▞▘▐▌ ▐▌▐▌ ▐▌▐▙▄▄▀▗▄█▄▖▐▙▄▄▖▐▌  ▐▌  █   ",
+	" ▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖▗▄▄▄▖▗▖  ▗▖▗▄▄▄▖▗▄▄▄▖▗▄▄▖ ",
+	" ▐▌   ▐▛▚▖▐▌▐▌     █  ▐▛▚▖▐▌▐▌   ▐▌   ▐▌ ▐▌",
+	" ▐▛▀▀▘▐▌ ▝▜▌▐▌▝▜▌  █  ▐▌ ▝▜▌▐▛▀▀▘▐▛▀▀▘▐▛▀▚▖",
+	" ▐▙▄▄▖▐▌  ▐▌▝▚▄▞▘▗▄█▄▖▐▌  ▐▌▐▙▄▄▖▐▙▄▄▖▐▌ ▐▌",
 }
 
 // Convert HSV to RGB (0-360, 0-1, 0-1) output uint8 components.
@@ -441,7 +431,7 @@ func hsvToRGB(h, s, v float64) (uint8, uint8, uint8) {
 func renderGradientHeader(text string, t float64) string {
 	var b strings.Builder
 	for i, ch := range text {
-		progress := math.Mod(float64(i)/100+t*0.1, 1.0)
+		progress := math.Mod(float64(i)/100+t*0.07, 1.0)
 		hue := progress * 360.0
 		// lower brightness for less intense colors
 		r, g, c := hsvToRGB(hue, 0.8, 0.5)
@@ -459,7 +449,7 @@ func generateBanner(t float64) string {
 	var b strings.Builder
 	for _, line := range bannerLines {
 		for i, ch := range line {
-			progress := math.Mod(float64(i)/float64(len(line))+t*0.10+0.5, 1.0)
+			progress := math.Mod(float64(i)/float64(len(line))+t*0.07+0.5, 1.0)
 			hue := progress * 360.0
 			r, g, cc := hsvToRGB(hue, 1.0, 1.0)
 			colorStr := fmt.Sprintf("#%02X%02X%02X", r, g, cc)
