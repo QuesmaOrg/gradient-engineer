@@ -6,12 +6,13 @@ import (
 	"os"
 	"strings"
 
+	"gradient-engineer/playbook"
+
 	anthropic "github.com/anthropics/anthropic-sdk-go"
 	anthopt "github.com/anthropics/anthropic-sdk-go/option"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	openai "github.com/openai/openai-go"
 	openaiopt "github.com/openai/openai-go/option"
-	"gradient-engineer/playbook"
 )
 
 // SummaryCommand represents a command's description and its captured output

@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/v2/spinner"
+	"github.com/charmbracelet/bubbles/v2/viewport"
+	tea "github.com/charmbracelet/bubbletea/v2"
 	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/v2"
 )
 
 var (
@@ -88,7 +88,7 @@ func NewModel(tb *Toolbox) *model {
 	cmds, _ := tb.GetDiagnosticCommands()
 	n := len(cmds)
 
-	vp := viewport.New(0, 0)
+	vp := viewport.New(viewport.WithWidth(0), viewport.WithHeight(0))
 	vp.MouseWheelEnabled = true
 
 	return &model{
@@ -239,12 +239,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		// Keep the viewport dimensions in sync with the terminal.
-		m.vp.Width = msg.Width
+		m.vp.SetWidth(msg.Width)
 		// Leave a single line at the bottom for the prompt/scroll bar.
 		if msg.Height > 1 {
-			m.vp.Height = msg.Height - 1
+			m.vp.SetHeight(msg.Height - 1)
 		} else {
-			m.vp.Height = msg.Height
+			m.vp.SetHeight(msg.Height)
 		}
 		return m, nil
 
