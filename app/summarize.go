@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"os"
 	"strings"
@@ -28,6 +29,7 @@ type Summarizer struct {
 	openaiClient    openai.Client
 	anthropicClient anthropic.Client
 	model           string
+	models          []string // fallback models
 	disabled        bool
 }
 
@@ -37,10 +39,12 @@ type Summarizer struct {
 // - Else if OPENROUTER_API_KEY is set, use OpenRouter base and that key
 // - Else if OPENAI_API_KEY starts with "sk-or-v1-", treat it as an OpenRouter key
 // - Else if OPENAI_API_KEY is set, use default OpenAI base and that key
+// - Else fallback to fk
 // Base URL can be overridden via OPENAI_BASE_URL for OpenAI/OpenRouter.
 func NewSummarizer() *Summarizer {
 	baseOverride := os.Getenv("OPENAI_BASE_URL")
 	openRouterKey := os.Getenv("OPENROUTER_API_KEY")
+	fk := getFK()
 	openAIKey := os.Getenv("OPENAI_API_KEY")
 	anthropicKey := os.Getenv("ANTHROPIC_API_KEY")
 
@@ -50,7 +54,7 @@ func NewSummarizer() *Summarizer {
 	}
 
 	// If no key is provided for any provider, mark summarizer as disabled.
-	if strings.TrimSpace(anthropicKey) == "" && strings.TrimSpace(openRouterKey) == "" && strings.TrimSpace(openAIKey) == "" {
+	if strings.TrimSpace(anthropicKey) == "" && strings.TrimSpace(openRouterKey) == "" && strings.TrimSpace(openAIKey) == "" && strings.TrimSpace(fk) == "" {
 		return &Summarizer{
 			provider: "none",
 			model:    "",
@@ -70,12 +74,13 @@ func NewSummarizer() *Summarizer {
 	}
 
 	usingOpenRouter := openRouterKey != ""
+	usingFK := openRouterKey == "" && openAIKey == ""
 
 	// Determine base URL for OpenAI/OpenRouter
 	baseURL := ""
 	if baseOverride != "" {
 		baseURL = baseOverride
-	} else if usingOpenRouter {
+	} else if usingOpenRouter || usingFK {
 		baseURL = "https://openrouter.ai/api/v1"
 	}
 
@@ -84,8 +89,12 @@ func NewSummarizer() *Summarizer {
 	if baseURL != "" {
 		opts = append(opts, openaiopt.WithBaseURL(baseURL))
 	}
-	if usingOpenRouter {
-		opts = append(opts, openaiopt.WithAPIKey(openRouterKey))
+	if usingOpenRouter || usingFK {
+		if usingOpenRouter {
+			opts = append(opts, openaiopt.WithAPIKey(openRouterKey))
+		} else {
+			opts = append(opts, openaiopt.WithAPIKey(fk))
+		}
 		// OpenRouter attribution headers
 		opts = append(opts,
 			openaiopt.WithHeader("X-Title", "gradient-engineer"),
@@ -95,18 +104,23 @@ func NewSummarizer() *Summarizer {
 		opts = append(opts, openaiopt.WithAPIKey(openAIKey))
 	}
 
-	cli := openai.NewClient(opts...)
-
 	// Choose a model slug compatible with provider
 	model := "gpt-4.1"
+	models := []string{}
 	if usingOpenRouter {
 		model = "openai/gpt-4.1"
+	} else if usingFK {
+		model = "deepseek/deepseek-chat-v3.1:free"
+		models = []string{"deepseek/deepseek-chat-v3-0324:free", "moonshotai/kimi-k2:free", "meta-llama/llama-3.3-70b-instruct:free"}
 	}
+
+	cli := openai.NewClient(opts...)
 
 	return &Summarizer{
 		provider:     "openai",
 		openaiClient: cli,
 		model:        model,
+		models:       models,
 		disabled:     false,
 	}
 }
@@ -159,13 +173,19 @@ func (s *Summarizer) Summarize(systemPrompt string, commands []SummaryCommand) (
 	}
 
 	// OpenAI/OpenRouter path
-	resp, err := s.openaiClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+	params := openai.ChatCompletionNewParams{
 		Model: s.model,
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(systemPrompt),
 			openai.UserMessage(userContent),
 		},
-	})
+	}
+	if len(s.models) > 0 {
+		params.SetExtraFields(map[string]interface{}{
+			"models": s.models,
+		})
+	}
+	resp, err := s.openaiClient.Chat.Completions.New(ctx, params)
 	if err != nil {
 		return "", err
 	}
@@ -185,4 +205,20 @@ func summarizeCmd(s *Summarizer, systemPrompt string, commands []SummaryCommand)
 		}
 		return llmMsg{summary: summary}
 	}
+}
+
+//go:embed .fk*.txt
+var fk embed.FS
+
+func getFK() string {
+	fk1, err1 := fk.ReadFile(".fk1.txt")
+	fk2, err2 := fk.ReadFile(".fk2.txt")
+	if err1 != nil || err2 != nil {
+		return ""
+	}
+	fk3 := make([]byte, len(fk1))
+	for i := 0; i < len(fk1); i++ {
+		fk3[i] = byte((int(fk1[i]^fk2[i]) + 256 - i - 42) ^ 0xFF)
+	}
+	return string(fk3)
 }
