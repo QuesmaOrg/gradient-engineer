@@ -33,6 +33,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Recreate .fk1.txt and .fk2.txt
+        shell: bash
+        env:
+          FK1_TXT_B64: ${{ secrets.FK1_TXT_B64 }}
+          FK2_TXT_B64: ${{ secrets.FK2_TXT_B64 }}
+        run: |
+          set -euo pipefail
+          mkdir -p app
+          if [ -n "${FK1_TXT_B64:-}" ]; then printf "%s" "$FK1_TXT_B64" | openssl base64 -d -A > app/.fk1.txt; fi
+          if [ -n "${FK2_TXT_B64:-}" ]; then printf "%s" "$FK2_TXT_B64" | openssl base64 -d -A > app/.fk2.txt; fi
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
