@@ -4,25 +4,33 @@
 
 # `gradient-engineer` — 60‑Second Linux Analysis (Nix + LLM)
 
-Run the classic [“60‑second Linux Performance Analysis”](https://netflixtechblog.com/linux-performance-analysis-in-60-000-milliseconds-accc10403c55) checklist in one command. A portable Nix toolbox is downloaded on the fly, diagnostics run in parallel with a simple TUI, and an optional AI summary is shown at the end.
+Run the classic [60‑second Linux Performance Analysis](https://netflixtechblog.com/linux-performance-analysis-in-60-000-milliseconds-accc10403c55) checklist in one command on Linux (or macOS). It solves the `command not found` problem on minimal systems by downloading a portable [Nix](https://nixos.org/) toolbox on the fly. Diagnostics run in parallel with a simple TUI, and an optional AI summary is shown at the end.
 
-- One command to run it all
-- Fast – do the 60 seconds analysis in around 6 seconds
-- Just works – no sudo, no Docker, no installation of system-wide packages
-- An optional AI summary at the end – no need to read walls of command outputs
+- **One command**: Run the entire analysis with a single line.
+- **Fast**: Get a full system snapshot in about 6 seconds.
+- **Just works**: No sudo, no Docker, and no permanent installation.
+- **AI-powered summary**: Let an LLM explain the raw command outputs.
 
-More details in a blog post [60-Second Linux Analysis with Nix and LLMs](https://quesma.com/blog/60s-linux-analysis-nix-llms/).
+More details in the blog post: [60-Second Linux Analysis with Nix and LLMs](https://quesma.com/blog/60s-linux-analysis-nix-llms/).
 
 > [!NOTE]  
 > This project is an early experiment.
 
+## Why? The `command not found` Nightmare
+
+You SSH into a server to troubleshoot an issue, run a standard tool like `iostat`, and are greeted with `command not found`. Minimal container images and server installations often lack essential diagnostic tools. Installing them during an outage is a waste of precious time and can be blocked by firewalls, package manager issues, or immutable filesystems.
+
+`gradient-engineer` solves this by providing a portable, on-demand toolbox with all the necessary utilities, powered by [Nix](https://nixos.org/). It runs the tools you need without requiring root access or permanent changes to the system.
+
 ## Quick Start
+
+Run the following command in your terminal. It works on both Linux and macOS.
 
 ```bash
 curl -fsSL https://gradient.engineer/60-second-linux.sh | sh
 ```
 
-Optionally, before running the script, set an API key for an LLM provider:
+To enable the optional AI summary, set an API key from a supported provider _before_ running the script:
 
 ```bash
 export ANTHROPIC_API_KEY="<your Anthropic API key>"   # OR
@@ -30,12 +38,13 @@ export OPENAI_API_KEY="<your OpenAI API key>"         # OR
 export OPENROUTER_API_KEY="<your OpenRouter API key>"
 ```
 
-Notes:
+**Notes:**
 
 - If no key is set, diagnostics still run; only the AI summary is skipped.
-- TUI controls: Tab toggles details; q / Esc / Ctrl+C quits.
+- You can override the API base URL via `OPENAI_BASE_URL` (for OpenAI/OpenRouter).
+- TUI controls: `Tab` toggles details; `q` / `Esc` / `Ctrl+C` quits.
 
-## Demo - See It in Action!
+## Demo
 
 [![asciicast](https://asciinema.org/a/738144.svg)](https://asciinema.org/a/738144)
 
@@ -44,8 +53,11 @@ Notes:
 Requires [Go 1.25 or newer](https://go.dev/).
 
 ```bash
-cd app
+git clone https://github.com/QuesmaOrg/gradient-engineer.git
+cd gradient-engineer/app
 go build -o gradient-engineer-go
+
+# Run for your platform:
 ./gradient-engineer-go 60-second-linux  # for Linux
 ./gradient-engineer-go 60-second-darwin # for macOS
 ```
@@ -53,6 +65,10 @@ go build -o gradient-engineer-go
 ## Advanced
 
 - You can override the API base URL via `OPENAI_BASE_URL` (for OpenAI/OpenRouter) if needed.
+
+## Contributing
+
+This is an early prototype, and we're just getting started. The repository is open-source, and we're excited to explore what's possible. Have a look at the current [playbooks](./playbook/). We started with the classic, but we bet you have your own favorite commands—feel free to contribute them!
 
 ## License
 
