@@ -7,9 +7,11 @@
 Run the classic [“60‑second Linux Performance Analysis”](https://netflixtechblog.com/linux-performance-analysis-in-60-000-milliseconds-accc10403c55) checklist in one command. A portable Nix toolbox is downloaded on the fly, diagnostics run in parallel with a simple TUI, and an optional AI summary is shown at the end.
 
 - One command to run it all
-- Fast and portable
-- No Docker, no system‑wide installs
-- Optional AI summary
+- Fast – do the 60 seconds analysis in around 6 seconds
+- Just works – no sudo, no Docker, no installation of system-wide packages
+- An optional AI summary at the end – no need to read walls of command outputs
+
+More details in a blog post [60-Second Linux Analysis with Nix and LLMs](https://quesma.com/blog/60s-linux-analysis-nix-llms/).
 
 > [!NOTE]  
 > This project is an early experiment.
@@ -17,12 +19,15 @@ Run the classic [“60‑second Linux Performance Analysis”](https://netflixte
 ## Quick Start
 
 ```bash
-# Any provider works; set one of these env vars to enable AI summary
-export ANTHROPIC_API_KEY="<your Anthropic API key>"   # Anthropic
-export OPENAI_API_KEY="<your OpenAI API key>"         # OpenAI
-export OPENROUTER_API_KEY="<your OpenRouter API key>" # OpenRouter
-
 curl -fsSL https://gradient.engineer/60-second-linux.sh | sh
+```
+
+Optionally, before running the script, set an API key for an LLM provider:
+
+```bash
+export ANTHROPIC_API_KEY="<your Anthropic API key>"   # OR
+export OPENAI_API_KEY="<your OpenAI API key>"         # OR
+export OPENROUTER_API_KEY="<your OpenRouter API key>"
 ```
 
 Notes:
@@ -36,10 +41,13 @@ Notes:
 
 ## Build from Source
 
+Requires [Go 1.25 or newer](https://go.dev/).
+
 ```bash
 cd app
 go build -o gradient-engineer-go
-./gradient-engineer-go 60-second-linux
+./gradient-engineer-go 60-second-linux  # for Linux
+./gradient-engineer-go 60-second-darwin # for macOS
 ```
 
 ## Advanced
