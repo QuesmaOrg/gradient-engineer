@@ -50,10 +50,7 @@ Requires [Go 1.25 or newer](https://go.dev/).
 git clone https://github.com/QuesmaOrg/gradient-engineer.git
 cd gradient-engineer/app
 go build -o gradient-engineer-go
-
-# Run for your platform:
-./gradient-engineer-go 60-second-linux  # for Linux
-./gradient-engineer-go 60-second-darwin # for macOS
+./gradient-engineer-go
 ```
 
 ## Advanced
