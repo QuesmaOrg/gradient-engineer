@@ -4,23 +4,18 @@
 
 # `gradient-engineer` — 60‑Second Linux Analysis (Nix + LLM)
 
-Run the classic [60‑second Linux Performance Analysis](https://netflixtechblog.com/linux-performance-analysis-in-60-000-milliseconds-accc10403c55) checklist in one command on Linux (or macOS). It solves the `command not found` problem on minimal systems by downloading a portable [Nix](https://nixos.org/) toolbox on the fly. Diagnostics run in parallel with a simple TUI, and an optional AI summary is shown at the end.
+Run the classic [60‑second Linux Performance Analysis](https://netflixtechblog.com/linux-performance-analysis-in-60-000-milliseconds-accc10403c55) checklist on Linux or macOS. This tool enhances the original playbook with a few key improvements:
 
 - **One command**: Run the entire analysis with a single line.
-- **Fast**: Get a full system snapshot in about 6 seconds.
-- **Just works**: No sudo, no Docker, and no permanent installation.
-- **AI-powered summary**: Let an LLM explain the raw command outputs.
+- **Fast**: Completes the analysis in about 6 seconds.
+- **Solves `command not found`**: Downloads a portable [Nix](https://nixos.org/) toolbox on the fly, so you don't need to install missing tools like `iostat` during a crisis.
+- **No dependencies**: Requires no `sudo`, Docker, or permanent installation.
+- **AI Summary**: Provides an optional, human-readable summary of the results.
 
 More details in the blog post: [60-Second Linux Analysis with Nix and LLMs](https://quesma.com/blog/60s-linux-analysis-nix-llms/).
 
 > [!NOTE]  
 > This project is an early experiment.
-
-## Why? The `command not found` Nightmare
-
-You SSH into a server to troubleshoot an issue, run a standard tool like `iostat`, and are greeted with `command not found`. Minimal container images and server installations often lack essential diagnostic tools. Installing them during an outage is a waste of precious time and can be blocked by firewalls, package manager issues, or immutable filesystems.
-
-`gradient-engineer` solves this by providing a portable, on-demand toolbox with all the necessary utilities, powered by [Nix](https://nixos.org/). It runs the tools you need without requiring root access or permanent changes to the system.
 
 ## Quick Start
 
@@ -30,7 +25,7 @@ Run the following command in your terminal. It works on both Linux and macOS.
 curl -fsSL https://gradient.engineer/60-second-linux.sh | sh
 ```
 
-To enable the optional AI summary, set an API key from a supported provider _before_ running the script:
+To enable the optional AI summary, set an API key _before_ running the script:
 
 ```bash
 export ANTHROPIC_API_KEY="<your Anthropic API key>"   # OR
@@ -40,9 +35,8 @@ export OPENROUTER_API_KEY="<your OpenRouter API key>"
 
 **Notes:**
 
-- If no key is set, diagnostics still run; only the AI summary is skipped.
-- You can override the API base URL via `OPENAI_BASE_URL` (for OpenAI/OpenRouter).
-- TUI controls: `Tab` toggles details; `q` / `Esc` / `Ctrl+C` quits.
+- If no key is set, the AI summary is skipped.
+- Use `Tab` to toggle details in the TUI; `q` / `Esc` / `Ctrl+C` quits.
 
 ## Demo
 
