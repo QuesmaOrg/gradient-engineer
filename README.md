@@ -4,6 +4,8 @@
 
 # `gradient-engineer` — 60‑Second Linux Analysis (Nix + LLM)
 
+[Read the blog post for details](https://quesma.com/blog/60s-linux-analysis-nix-llms/).
+
 Run the classic [60‑second Linux Performance Analysis](https://netflixtechblog.com/linux-performance-analysis-in-60-000-milliseconds-accc10403c55) checklist on Linux or macOS. This tool enhances the original playbook with a few key improvements:
 
 - **One command**: Run the entire analysis with a single line.
