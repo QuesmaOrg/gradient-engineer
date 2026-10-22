@@ -31,7 +31,7 @@ jobs:
             arch: arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Recreate .fk1.txt and .fk2.txt
         shell: bash
@@ -45,7 +45,7 @@ jobs:
           if [ -n "${FK2_TXT_B64:-}" ]; then printf "%s" "$FK2_TXT_B64" | openssl base64 -d -A > app/.fk2.txt; fi
 
       - name: Set up Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
           check-latest: true
@@ -62,7 +62,7 @@ jobs:
           GOFLAGS="-trimpath" go build -ldflags="-s -w" -o dist/gradient-engineer.${{ matrix.os }}.${{ matrix.arch }} ./app
 
       - name: Upload binary artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: gradient-engineer.${{ matrix.os }}.${{ matrix.arch }}
           path: dist/gradient-engineer.${{ matrix.os }}.${{ matrix.arch }}
