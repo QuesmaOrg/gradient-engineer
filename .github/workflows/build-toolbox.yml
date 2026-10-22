@@ -31,17 +31,17 @@ jobs:
             arch: arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
           go-version-file: go.mod
           check-latest: true
           cache: true
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v31
+        uses: cachix/install-nix-action@448cde739abec1eaf0646249e3d25bb8d9bc7702 # v31.11.2
 
       - name: Build toolbox builder
         shell: bash
@@ -67,7 +67,7 @@ jobs:
           ./toolbox-builder --playbook ../playbook/60-second-darwin.yaml --out .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: toolbox.${{ matrix.os }}.${{ matrix.arch }}
           path: toolbox/*.tar.xz
